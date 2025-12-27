@@ -1,0 +1,21 @@
+{
+    "name": "hexlet/code",
+    "autoload": {
+        "psr-4": {
+            "Hexlet\\Code\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Манукьян Елена Михайловна",
+            "email": "e.manukyan@aitiguru.com"
+        }
+    ],
+    "require": {
+        "slim/slim": "^4.15",
+        "slim/psr7": "^1.8"
+    },
+    "require-dev": {
+        "squizlabs/php_codesniffer": "^4.0"
+    }
+}
