@@ -27,6 +27,8 @@ $dotenv->safeLoad();
 
 $urlStr = $_ENV['DATABASE_URL'] ?? getenv('DATABASE_URL');
 
+var_dump($urlStr);
+
 if (!$urlStr) {
     die("Ошибка: DATABASE_URL не найдена. Проверьте настройки Environment в Render.");
 }
