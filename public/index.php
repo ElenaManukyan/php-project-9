@@ -27,7 +27,7 @@ $dotenv->safeLoad();
 
 $urlStr = $_ENV['DATABASE_URL'] ?? getenv('DATABASE_URL');
 
-var_dump($urlStr);
+// var_dump($urlStr);
 
 if (!$urlStr) {
     die("Ошибка: DATABASE_URL не найдена. Проверьте настройки Environment в Render.");
@@ -35,7 +35,7 @@ if (!$urlStr) {
 
 $databaseUrl = parse_url($urlStr);
 
-var_dump($databaseUrl);
+// var_dump($databaseUrl);
 
 $conStr = sprintf(
     "pgsql:host=%s;port=%d;dbname=%s;user=%s;password=%s",
