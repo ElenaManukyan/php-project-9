@@ -25,6 +25,10 @@ $renderer->addAttribute('flash', $flash);
 $dotenv = Dotenv::createImmutable(__DIR__ . '/..');
 $dotenv->safeLoad();
 
+$port = $_ENV['port'];
+
+var_dump($port);
+
 $urlStr = $_ENV['DATABASE_URL'] /* ?? getenv('DATABASE_URL') */;
 
 if (!$urlStr) {
