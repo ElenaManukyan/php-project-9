@@ -25,9 +25,7 @@ $renderer->addAttribute('flash', $flash);
 $dotenv = Dotenv::createImmutable(__DIR__ . '/..');
 $dotenv->safeLoad();
 
-$urlStr = $_ENV['DATABASE_URL'] ?? getenv('DATABASE_URL');
-
-// var_dump($urlStr);
+$urlStr = $_ENV['DATABASE_URL'] /* ?? getenv('DATABASE_URL') */;
 
 if (!$urlStr) {
     die("Ошибка: DATABASE_URL не найдена. Проверьте настройки Environment в Render.");
@@ -35,12 +33,10 @@ if (!$urlStr) {
 
 $databaseUrl = parse_url($urlStr);
 
-// var_dump($databaseUrl);
-
 $conStr = sprintf(
     "pgsql:host=%s;port=%d;dbname=%s;user=%s;password=%s",
     $databaseUrl['host'],
-    $databaseUrl['port'] ?? 5432,
+    $databaseUrl['port'] /* ?? 5432 */,
     ltrim($databaseUrl['path'], '/'),
     $databaseUrl['user'],
     $databaseUrl['pass']
@@ -59,13 +55,6 @@ if ($checkTable === false || $checkTable->fetchColumn() === false) {
         $pdo->exec($sql);
     }
 }
-// try {
-//     $stmt = $pdo->query('SELECT version()');
-//     $version = $stmt->fetchColumn();
-//     var_dump("Успешное подключение к БД! Версия: " . $version);
-// } catch (\PDOException $e) {
-//     var_dump("Ошибка подключения: " . $e->getMessage());
-// }
 
 $app->get('/', function ($request, $response) use ($renderer) {
     return $renderer->render($response, "home.phtml", [
@@ -73,6 +62,7 @@ $app->get('/', function ($request, $response) use ($renderer) {
         'errors' => []
     ]);
 });
+
 $app->get('/urls', function ($request, $response) use ($pdo, $renderer) {
     $stmt = $pdo->query("SELECT id, name FROM urls ORDER BY created_at DESC");
     $urls = $stmt->fetchAll();
@@ -145,7 +135,7 @@ $app->get('/urls/{id}', function ($request, $response, array $args) use ($pdo, $
         return $response->withStatus(404)->write('Страница не найдена');
     }
 
-    $stmtChecks = $pdo->prepare("SELECT * FROM urls WHERE id = ? ORDER BY created_at DESC");
+    $stmtChecks = $pdo->prepare("SELECT * FROM url_checks WHERE url_id = ? ORDER BY created_at DESC");
     $stmtChecks->execute([$id]);
     $checks = $stmtChecks->fetchAll() ?: [];
 
@@ -155,23 +145,26 @@ $app->get('/urls/{id}', function ($request, $response, array $args) use ($pdo, $
     ]);
 })->setName('urls.show');
 
-$app->post('/urls/{id}', function ($request, $response, array $args) use ($pdo, $flash) {
-    $urlId = $args['id'];
-
+$app->post('/urls/{url_id}/checks', function ($request, $response, array $args) use ($pdo, $flash) {
+    $urlId = $args['url_id'];
 
     $stmt = $pdo->prepare("SELECT name FROM urls WHERE id = ?");
     $stmt->execute([$urlId]);
     $url = $stmt->fetch();
 
-    $client = new Client(['timeout' => 5.0]);
+    if (!$url) {
+        return $response->withStatus(404);
+    }
+
+    $client = new Client(['timeout' => 5.0, 'verify' => false]);
 
     try {
-
         $res = $client->get($url['name']);
         $document = new Document($res->getBody()->getContents());
 
         $h1 = $document->has('h1') ? $document->find('h1')[0]->text() : null;
         $title = $document->has('title') ? $document->find('title')[0]->text() : null;
+        
         $descriptionElement = $document->find('meta[name=description]')[0] ?? null;
         $description = $descriptionElement ? $descriptionElement->getAttribute('content') : null;
 
@@ -179,25 +172,33 @@ $app->post('/urls/{id}', function ($request, $response, array $args) use ($pdo, 
             INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at)
             VALUES (?, ?, ?, ?, ?, ?)
         ");
+
+        // echo '<pre>';
+        // var_dump(Carbon::now('Europe/Moscow'));
+        // echo '</pre>';
+        // die();
+
+        // var_dump(Carbon::now());
+        
         $stmt->execute([
             $urlId,
             $res->getStatusCode(),
             mb_strimwidth($h1, 0, 255),
             mb_strimwidth($title, 0, 255),
             $description,
-            Carbon::now()
+            Carbon::now('Europe/Moscow')
         ]);
 
         $flash->addMessage('success', 'Страница успешно проверена');
     } catch (\Exception $e) {
-        $flash->addMessage('danger', 'Проверка завершилась с ошибкой');
+        $flash->addMessage('danger', 'Проверка завершилась с ошибкой: ' . $e->getMessage());
     }
 
     $routeContext = RouteContext::fromRequest($request);
     $routeParser = $routeContext->getRouteParser();
-    return $response
-        ->withHeader('Location', $routeParser->urlFor('urls.show', ['id' => $urlId]))
-        ->withStatus(302);
+    $url = $routeParser->urlFor('urls.show', ['id' => $urlId]);
+
+    return $response->withHeader('Location', $url)->withStatus(302);
 });
 
 $app->run();
