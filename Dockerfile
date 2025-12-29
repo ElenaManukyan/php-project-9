@@ -1,17 +1,16 @@
-FROM php:8.4-cli
+FROM php:8.2-fpm
 
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    unzip \
+    && docker-php-ext-install pdo pdo_pgsql
 
-RUN apt-get update && apt-get install -y libzip-dev libpq-dev
-RUN docker-php-ext-install zip pdo pdo_pgsql
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
-    && php composer-setup.php --install-dir=/usr/local/bin --filename=composer \
-    && php -r "unlink('composer-setup.php');"
-
-WORKDIR /app
+WORKDIR /var/www
 
 COPY . .
 
-RUN composer install
+RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 
 CMD ["bash", "-c", "make start"]
