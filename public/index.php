@@ -25,14 +25,13 @@ $renderer->addAttribute('flash', $flash);
 $dotenv = Dotenv::createImmutable(__DIR__ . '/..');
 $dotenv->safeLoad();
 
-// $databaseUrlStr = $_ENV['DATABASE_URL'] ?? getenv('DATABASE_URL');
-
 $urlStr = $_ENV['DATABASE_URL'] ?? getenv('DATABASE_URL');
+
+if (!$urlStr) {
+    die("Ошибка: DATABASE_URL не найдена. Проверьте настройки Environment в Render.");
+}
+
 $databaseUrl = parse_url($urlStr);
-
-// var_dump($databaseUrl);
-
-// $databaseUrl = parse_url($_ENV['DATABASE_URL']);
 
 $conStr = sprintf(
     "pgsql:host=%s;port=%d;dbname=%s;user=%s;password=%s",
@@ -43,12 +42,19 @@ $conStr = sprintf(
     $databaseUrl['pass']
 );
 
-// var_dump($databaseUrl);
-
 $pdo = new \PDO($conStr);
 $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 $pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
 
+$checkTable = $pdo->query("SELECT 1 FROM information_schema.tables WHERE table_name = 'urls' LIMIT 1");
+
+if ($checkTable === false || $checkTable->fetchColumn() === false) {
+    $sqlPath = __DIR__ . '/../database.sql'; 
+    if (file_exists($sqlPath)) {
+        $sql = file_get_contents($sqlPath);
+        $pdo->exec($sql);
+    }
+}
 // try {
 //     $stmt = $pdo->query('SELECT version()');
 //     $version = $stmt->fetchColumn();
