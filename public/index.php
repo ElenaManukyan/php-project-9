@@ -25,7 +25,7 @@ $renderer->addAttribute('flash', $flash);
 $dotenv = Dotenv::createImmutable(__DIR__ . '/..');
 $dotenv->safeLoad();
 
-$port = $_ENV['port'];
+$port = $_ENV['PORT'];
 
 var_dump($port);
 
