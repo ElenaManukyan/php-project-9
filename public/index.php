@@ -38,7 +38,7 @@ var_dump($databaseUrl);
 $conStr = sprintf(
     "pgsql:host=%s;port=%d;dbname=%s;user=%s;password=%s",
     $databaseUrl['host'],
-    $databaseUrl['port'],
+    $databaseUrl['port'] ?? '',
     ltrim($databaseUrl['path'], '/'),
     $databaseUrl['user'],
     $databaseUrl['pass']
