@@ -25,9 +25,9 @@ $renderer->addAttribute('flash', $flash);
 $dotenv = Dotenv::createImmutable(__DIR__ . '/..');
 $dotenv->safeLoad();
 
-$port = $_ENV['PORT'];
+// $port = $_ENV['PORT'];
 
-var_dump($port);
+// var_dump($port);
 
 $urlStr = $_ENV['DATABASE_URL'] /* ?? getenv('DATABASE_URL') */;
 
@@ -37,12 +37,12 @@ if (!$urlStr) {
 
 $databaseUrl = parse_url($urlStr);
 
-var_dump($databaseUrl);
+// var_dump($databaseUrl);
 
 $conStr = sprintf(
     "pgsql:host=%s;port=%d;dbname=%s;user=%s;password=%s",
     $databaseUrl['host'],
-    $databaseUrl['port'] /* ?? 5432 */,
+    $databaseUrl['port'] ?? $_ENV['PORT'],
     ltrim($databaseUrl['path'], '/'),
     $databaseUrl['user'],
     $databaseUrl['pass']
