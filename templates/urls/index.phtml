@@ -12,14 +12,14 @@
             </thead>
             <tbody>
                 <?php foreach ($urls as $url): ?>
-                    <tr>
-                        <td><?= $url['id'] ?></td>
-                        <td>
-                            <a href="/urls/<?= $url['id'] ?>"><?= htmlspecialchars($url['name']) ?></a>
-                        </td>
-                        <td></td>
-                        <td></td>
-                    </tr>
+                <tr>
+                    <td><?= $url['id'] ?></td>
+                    <td>
+                        <a href="/urls/<?= $url['id'] ?>"><?= $url['name'] ?></a>
+                    </td>
+                    <td><?= $url['last_check'] ?? '' ?></td>
+                    <td><?= $url['status_code'] ?? '' ?></td>
+                </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>

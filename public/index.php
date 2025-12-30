@@ -69,8 +69,20 @@ $app->get('/', function ($request, $response) use ($renderer) {
     ]);
 });
 
-$app->get('/urls', function ($request, $response) use ($pdo, $renderer) {
-    $stmt = $pdo->query("SELECT id, name FROM urls ORDER BY created_at DESC");
+$app->get('/urls', function ($request, $response) use ($pdo, $renderer) {    
+    $sql = "SELECT 
+                urls.id, 
+                urls.name, 
+                url_checks.created_at AS last_check, 
+                url_checks.status_code 
+            FROM urls 
+            LEFT JOIN url_checks ON urls.id = url_checks.url_id 
+                AND url_checks.id = (
+                    SELECT MAX(id) FROM url_checks WHERE url_id = urls.id
+                )
+            ORDER BY urls.created_at DESC";
+
+    $stmt = $pdo->query($sql);
     $urls = $stmt->fetchAll();
 
     return $renderer->render($response, 'urls/index.phtml', ['urls' => $urls]);
