@@ -180,7 +180,7 @@ $app->post('/urls/{url_id}/checks', function ($request, $response, array $args) 
         $res = $client->get($url['name']);
         $document = new Document($res->getBody()->getContents());
 
-        $h1 = $document->has('h1') ? $document->find('h1')[0]->text() : null;
+        $h1 = $document->has('h1') ? $document->find('h1')[0]->text() : '';
         $title = $document->has('title') ? $document->find('title')[0]->text() : null;
         
         $descriptionElement = $document->find('meta[name=description]')[0] ?? null;
