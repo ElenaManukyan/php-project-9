@@ -37,7 +37,7 @@ if (!$urlStr) {
 
 $databaseUrl = parse_url($urlStr);
 
-var_dump($databaseUrl);
+// var_dump($databaseUrl);
 
 $conStr = sprintf(
     "pgsql:host=%s;port=%d;dbname=%s;user=%s;password=%s",
