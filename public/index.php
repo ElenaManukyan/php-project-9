@@ -49,7 +49,7 @@ $pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
 $checkTable = $pdo->query("SELECT 1 FROM information_schema.tables WHERE table_name = 'urls' LIMIT 1");
 
 if ($checkTable === false || $checkTable->fetchColumn() === false) {
-    $sqlPath = __DIR__ . '/../database.sql'; 
+    $sqlPath = __DIR__ . '/../database.sql';
     if (file_exists($sqlPath)) {
         $sql = file_get_contents($sqlPath);
         $pdo->exec($sql);
@@ -63,7 +63,7 @@ $app->get('/', function ($request, $response) use ($renderer) {
     ]);
 });
 
-$app->get('/urls', function ($request, $response) use ($pdo, $renderer) {    
+$app->get('/urls', function ($request, $response) use ($pdo, $renderer) {
     $sql = "SELECT 
                 urls.id, 
                 urls.name, 
@@ -85,11 +85,6 @@ $app->get('/urls', function ($request, $response) use ($pdo, $renderer) {
 $app->post('/urls', function ($request, $response) use ($pdo, $flash, $renderer) {
     $data = $request->getParsedBody();
 
-    // echo '<pre>';
-    // var_dump($data);
-    // echo '</pre>';
-    // die();
-
     $url = $data['url']['name'] ?? '';
     $parsedUrl = parse_url($url);
 
@@ -110,11 +105,6 @@ $app->post('/urls', function ($request, $response) use ($pdo, $flash, $renderer)
     $stmt->execute([$normalizedUrl]);
     $existingUrl = $stmt->fetch();
 
-    // echo '<pre>';
-    // var_dump($existingUrl);
-    // echo '</pre>';
-    // die();
-
     if ($existingUrl) {
         $id = $existingUrl['id'];
         $flash->addMessage('info', 'Страница уже существует');
@@ -128,7 +118,7 @@ $app->post('/urls', function ($request, $response) use ($pdo, $flash, $renderer)
 
     $routeContext = RouteContext::fromRequest($request);
     $routeParser = $routeContext->getRouteParser();
-    
+
     $url = $routeParser->urlFor('urls.show', ['id' => $id]);
 
     return $response
@@ -176,7 +166,6 @@ $app->post('/urls/{url_id}/checks', function ($request, $response, array $args) 
 
         $h1 = $document->has('h1') ? $document->find('h1')[0]->text() : '';
         $title = $document->has('title') ? $document->find('title')[0]->text() : null;
-        
         $descriptionElement = $document->find('meta[name=description]')[0] ?? null;
         $description = $descriptionElement ? $descriptionElement->getAttribute('content') : null;
 
@@ -184,11 +173,6 @@ $app->post('/urls/{url_id}/checks', function ($request, $response, array $args) 
             INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at)
             VALUES (?, ?, ?, ?, ?, ?)
         ");
-
-        // echo '<pre>';
-        // var_dump(Carbon::now('Europe/Moscow'));
-        // echo '</pre>';
-        // die();
         
         $stmt->execute([
             $urlId,
