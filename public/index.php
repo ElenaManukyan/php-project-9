@@ -90,11 +90,11 @@ $app->post('/urls', function ($request, $response) use ($pdo, $flash, $renderer)
 
     if (empty($url) || strlen($url) > 255 || !filter_var($url, FILTER_VALIDATE_URL)) {
         return $renderer->render($response->withStatus(422), "home.phtml", [
-            'url' => ['name' => $url], 
+            'url' => ['name' => $url],
             'errors' => ['name' => 'Некорректный URL']
         ]);
     }
-    
+
     if (!isset($parsedUrl['scheme']) || !isset($parsedUrl['host'])) {
         return $response->withHeader('Location', '/')->withStatus(302);
     }
@@ -111,7 +111,7 @@ $app->post('/urls', function ($request, $response) use ($pdo, $flash, $renderer)
     } else {
         $stmt = $pdo->prepare("INSERT INTO urls (name, created_at) VALUES (?, ?)");
         $stmt->execute([$normalizedUrl, date('Y-m-d H:i:s')]);
-        
+
         $id = $pdo->lastInsertId();
         $flash->addMessage('success', 'Страница успешно добавлена');
     }
@@ -173,7 +173,7 @@ $app->post('/urls/{url_id}/checks', function ($request, $response, array $args) 
             INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at)
             VALUES (?, ?, ?, ?, ?, ?)
         ");
-        
+
         $stmt->execute([
             $urlId,
             $res->getStatusCode(),
