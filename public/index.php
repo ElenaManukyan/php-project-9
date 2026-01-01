@@ -25,11 +25,7 @@ $renderer->addAttribute('flash', $flash);
 $dotenv = Dotenv::createImmutable(__DIR__ . '/..');
 $dotenv->safeLoad();
 
-// $port = $_ENV['PORT'];
-
-// var_dump($port);
-
-$urlStr = $_ENV['DATABASE_URL'] /* ?? getenv('DATABASE_URL') */;
+$urlStr = $_ENV['DATABASE_URL'];
 
 if (!$urlStr) {
     die("Ошибка: DATABASE_URL не найдена. Проверьте настройки Environment в Render.");
@@ -37,12 +33,10 @@ if (!$urlStr) {
 
 $databaseUrl = parse_url($urlStr);
 
-// var_dump($databaseUrl);
-
 $conStr = sprintf(
     "pgsql:host=%s;port=%d;dbname=%s;user=%s;password=%s",
     $databaseUrl['host'],
-    $databaseUrl['port']/* ?? $_ENV['PORT'] */,
+    $databaseUrl['port'],
     ltrim($databaseUrl['path'], '/'),
     $databaseUrl['user'],
     $databaseUrl['pass']
@@ -195,8 +189,6 @@ $app->post('/urls/{url_id}/checks', function ($request, $response, array $args) 
         // var_dump(Carbon::now('Europe/Moscow'));
         // echo '</pre>';
         // die();
-
-        // var_dump(Carbon::now());
         
         $stmt->execute([
             $urlId,
@@ -209,7 +201,7 @@ $app->post('/urls/{url_id}/checks', function ($request, $response, array $args) 
 
         $flash->addMessage('success', 'Страница успешно проверена');
     } catch (\Exception $e) {
-        $flash->addMessage('danger', 'Проверка завершилась с ошибкой: ' . $e->getMessage());
+        $flash->addMessage('danger', "Проверка завершилась с ошибкой: {$e->getMessage()}");
     }
 
     $routeContext = RouteContext::fromRequest($request);
