@@ -12,49 +12,48 @@ use Slim\Routing\RouteContext;
 use GuzzleHttp\Client;
 use DiDom\Document;
 use Carbon\Carbon;
+use DI\Container; // Добавляем импорт
 
+// 1. Создаем контейнер ПЕРЕД созданием приложения
+$container = new Container();
+
+// 2. Регистрируем PDO в контейнере
+$container->set(\PDO::class, function () {
+    $dotenv = Dotenv::createImmutable(__DIR__ . '/..');
+    $dotenv->safeLoad();
+    
+    $urlStr = $_ENV['DATABASE_URL'] ?? null;
+    if (!$urlStr) {
+        die("Ошибка: DATABASE_URL не найдена.");
+    }
+
+    $databaseUrl = parse_url($urlStr);
+    $conStr = sprintf(
+        "pgsql:host=%s;port=%d;dbname=%s;user=%s;password=%s",
+        $databaseUrl['host'],
+        $databaseUrl['port'],
+        ltrim($databaseUrl['path'], '/'),
+        $databaseUrl['user'],
+        $databaseUrl['pass']
+    );
+
+    $pdo = new \PDO($conStr);
+    $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+    $pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
+    return $pdo;
+});
+
+// 3. Передаем контейнер в AppFactory
+AppFactory::setContainer($container);
 $app = AppFactory::create();
 
+// Настройки рендерера и флеш-сообщений
 $flash = new Messages();
-
 $renderer = new PhpRenderer(__DIR__ . '/../templates');
 $renderer->setLayout('layout.phtml');
-
 $renderer->addAttribute('flash', $flash);
 
-$dotenv = Dotenv::createImmutable(__DIR__ . '/..');
-$dotenv->safeLoad();
-
-$urlStr = $_ENV['DATABASE_URL'];
-
-if (!$urlStr) {
-    die("Ошибка: DATABASE_URL не найдена. Проверьте настройки Environment в Render.");
-}
-
-$databaseUrl = parse_url($urlStr);
-
-$conStr = sprintf(
-    "pgsql:host=%s;port=%d;dbname=%s;user=%s;password=%s",
-    $databaseUrl['host'],
-    $databaseUrl['port'],
-    ltrim($databaseUrl['path'], '/'),
-    $databaseUrl['user'],
-    $databaseUrl['pass']
-);
-
-$pdo = new \PDO($conStr);
-$pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-$pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
-
-// $checkTable = $pdo->query("SELECT 1 FROM information_schema.tables WHERE table_name = 'urls' LIMIT 1");
-
-// if ($checkTable === false || $checkTable->fetchColumn() === false) {
-//     $sqlPath = __DIR__ . '/../database.sql';
-//     if (file_exists($sqlPath)) {
-//         $sql = file_get_contents($sqlPath);
-//         $pdo->exec($sql);
-//     }
-// }
+// --- МАРШРУТЫ ---
 
 $app->get('/', function ($request, $response) use ($renderer) {
     return $renderer->render($response, "home.phtml", [
@@ -63,7 +62,9 @@ $app->get('/', function ($request, $response) use ($renderer) {
     ]);
 });
 
-$app->get('/urls', function ($request, $response) use ($pdo, $renderer) {
+$app->get('/urls', function ($request, $response) use ($renderer) {
+    $pdo = $this->get(\PDO::class);
+    
     $sql = "SELECT 
                 urls.id, 
                 urls.name, 
@@ -82,7 +83,9 @@ $app->get('/urls', function ($request, $response) use ($pdo, $renderer) {
     return $renderer->render($response, 'urls/index.phtml', ['urls' => $urls]);
 })->setName('urls.index');
 
-$app->post('/urls', function ($request, $response) use ($pdo, $flash, $renderer) {
+$app->post('/urls', function ($request, $response) use ($flash, $renderer) {
+    $pdo = $this->get(\PDO::class);
+    
     $data = $request->getParsedBody();
 
     $url = $data['url']['name'] ?? '';
@@ -126,7 +129,9 @@ $app->post('/urls', function ($request, $response) use ($pdo, $flash, $renderer)
         ->withStatus(302);
 })->setName('urls.store');
 
-$app->get('/urls/{id}', function ($request, $response, array $args) use ($pdo, $renderer) {
+$app->get('/urls/{id}', function ($request, $response, array $args) use ($renderer) {
+    $pdo = $this->get(\PDO::class);
+    
     $id = $args['id'];
 
     $stmt = $pdo->prepare("SELECT * FROM urls WHERE id = ?");
@@ -147,7 +152,9 @@ $app->get('/urls/{id}', function ($request, $response, array $args) use ($pdo, $
     ]);
 })->setName('urls.show');
 
-$app->post('/urls/{url_id}/checks', function ($request, $response, array $args) use ($pdo, $flash) {
+$app->post('/urls/{url_id}/checks', function ($request, $response, array $args) use ($flash) {
+    $pdo = $this->get(\PDO::class);
+    
     $urlId = $args['url_id'];
 
     $stmt = $pdo->prepare("SELECT name FROM urls WHERE id = ?");
