@@ -46,15 +46,15 @@ $pdo = new \PDO($conStr);
 $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 $pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
 
-$checkTable = $pdo->query("SELECT 1 FROM information_schema.tables WHERE table_name = 'urls' LIMIT 1");
+// $checkTable = $pdo->query("SELECT 1 FROM information_schema.tables WHERE table_name = 'urls' LIMIT 1");
 
-if ($checkTable === false || $checkTable->fetchColumn() === false) {
-    $sqlPath = __DIR__ . '/../database.sql';
-    if (file_exists($sqlPath)) {
-        $sql = file_get_contents($sqlPath);
-        $pdo->exec($sql);
-    }
-}
+// if ($checkTable === false || $checkTable->fetchColumn() === false) {
+//     $sqlPath = __DIR__ . '/../database.sql';
+//     if (file_exists($sqlPath)) {
+//         $sql = file_get_contents($sqlPath);
+//         $pdo->exec($sql);
+//     }
+// }
 
 $app->get('/', function ($request, $response) use ($renderer) {
     return $renderer->render($response, "home.phtml", [
