@@ -21,7 +21,7 @@ $container = new Container();
 $container->set(\PDO::class, function () {
     $dotenv = Dotenv::createImmutable(__DIR__ . '/..');
     $dotenv->safeLoad();
-    
+
     $urlStr = $_ENV['DATABASE_URL'] ?? null;
     if (!$urlStr) {
         die("Ошибка: DATABASE_URL не найдена.");
@@ -71,7 +71,7 @@ $app->get('/', function ($request, $response) use ($renderer) {
 
 $app->get('/urls', function ($request, $response) use ($renderer) {
     $pdo = $this->get(\PDO::class);
-    
+
     $urls = $pdo->query("SELECT id, name FROM urls ORDER BY created_at DESC")->fetchAll();
 
     $checksSql = "SELECT DISTINCT ON (url_id) url_id, created_at, status_code 
@@ -102,7 +102,7 @@ $app->post('/urls', function ($request, $response) use ($flash, $renderer) {
     $urlName = $urlData['name'] ?? '';
 
     $v = new \Valitron\Validator(['name' => $urlName]);
-    
+
     $v->rule('required', 'name')->message('URL не должен быть пустым');
     $v->rule('url', 'name')->message('Некорректный URL');
     $v->rule('lengthMax', 'name', 255)->message('URL превышает 255 символов');
@@ -168,7 +168,7 @@ $app->get('/urls/{id:[0-9]+}', function ($request, $response, array $args) use (
 
 $app->post('/urls/{url_id:[0-9]+}/checks', function ($request, $response, array $args) use ($flash) {
     $pdo = $this->get(\PDO::class);
-    
+
     $urlId = $args['url_id'];
 
     $stmt = $pdo->prepare("SELECT name FROM urls WHERE id = ?");
@@ -222,7 +222,10 @@ $errorMiddleware->setErrorHandler(HttpNotFoundException::class, function (
     bool $displayErrorDetails,
     bool $logErrors,
     bool $logErrorDetails
-) use ($app, $renderer) {
+) use (
+    $app,
+    $renderer
+) {
     $response = $app->getResponseFactory()->createResponse();
     return $renderer->render($response->withStatus(404), 'errors/404.phtml');
 });
