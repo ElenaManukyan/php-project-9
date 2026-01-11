@@ -13,12 +13,14 @@
             <tbody>
                 <?php foreach ($urls as $url): ?>
                 <tr>
-                    <td><?= $url['id'] ?></td>
+                    <td><?= htmlspecialchars($url['id']) ?></td>
                     <td>
-                        <a href="/urls/<?= $url['id'] ?>"><?= $url['name'] ?></a>
+                        <a href="<?= $router->urlFor('urls.show', ['id' => $url['id']]) ?>">
+                            <?= htmlspecialchars($url['name']) ?>
+                        </a>
                     </td>
-                    <td><?= $url['last_check'] ?? '' ?></td>
-                    <td><?= $url['status_code'] ?? '' ?></td>
+                    <td><?= htmlspecialchars($url['last_check'] ?? '') ?></td>
+                    <td><?= htmlspecialchars($url['status_code'] ?? '') ?></td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>

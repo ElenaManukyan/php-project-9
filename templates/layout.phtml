@@ -27,11 +27,11 @@
         </div>
     </nav>
 
-    <?php $messages = $flash->getMessages(); ?>
-    <?php foreach ($messages as $type => $msgs): ?>
+    <?php foreach ($flashMessages as $type => $msgs): ?>
         <?php foreach ($msgs as $msg): ?>
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <div class="alert alert-<?= htmlspecialchars($type) ?> alert-dismissible fade show" role="alert">
                 <?= htmlspecialchars($msg) ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         <?php endforeach; ?>
     <?php endforeach; ?>

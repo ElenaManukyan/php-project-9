@@ -49,6 +49,15 @@ $app = AppFactory::create();
 $flash = new Messages();
 $renderer = new PhpRenderer(__DIR__ . '/../templates');
 $renderer->setLayout('layout.phtml');
+
+$routeParser = $app->getRouteCollector()->getRouteParser();
+$renderer->addAttribute('router', $routeParser);
+
+$app->add(function ($request, $handler) use ($renderer, $flash) {
+    $renderer->addAttribute('flashMessages', $flash->getMessages());
+    return $handler->handle($request);
+});
+
 $renderer->addAttribute('flash', $flash);
 
 $errorMiddleware = $app->addErrorMiddleware(true, true, true);
@@ -63,44 +72,55 @@ $app->get('/', function ($request, $response) use ($renderer) {
 $app->get('/urls', function ($request, $response) use ($renderer) {
     $pdo = $this->get(\PDO::class);
     
-    $sql = "SELECT 
-                urls.id, 
-                urls.name, 
-                url_checks.created_at AS last_check, 
-                url_checks.status_code 
-            FROM urls 
-            LEFT JOIN url_checks ON urls.id = url_checks.url_id 
-                AND url_checks.id = (
-                    SELECT MAX(id) FROM url_checks WHERE url_id = urls.id
-                )
-            ORDER BY urls.created_at DESC";
+    $urls = $pdo->query("SELECT id, name FROM urls ORDER BY created_at DESC")->fetchAll();
 
-    $stmt = $pdo->query($sql);
-    $urls = $stmt->fetchAll();
+    $checksSql = "SELECT DISTINCT ON (url_id) url_id, created_at, status_code 
+                  FROM url_checks 
+                  ORDER BY url_id, id DESC";
+    $checks = $pdo->query($checksSql)->fetchAll();
 
-    return $renderer->render($response, 'urls/index.phtml', ['urls' => $urls]);
+    $checksById = [];
+    foreach ($checks as $check) {
+        $checksById[$check['url_id']] = $check;
+    }
+
+    $urlsWithChecks = array_map(function ($url) use ($checksById) {
+        $lastCheck = $checksById[$url['id']] ?? null;
+        return array_merge($url, [
+            'last_check' => $lastCheck['created_at'] ?? null,
+            'status_code' => $lastCheck['status_code'] ?? null
+        ]);
+    }, $urls);
+
+    return $renderer->render($response, 'urls/index.phtml', ['urls' => $urlsWithChecks]);
 })->setName('urls.index');
 
 $app->post('/urls', function ($request, $response) use ($flash, $renderer) {
     $pdo = $this->get(\PDO::class);
-    
     $data = $request->getParsedBody();
+    $urlData = $data['url'] ?? [];
+    $urlName = $urlData['name'] ?? '';
 
-    $url = $data['url']['name'] ?? '';
-    $parsedUrl = parse_url($url);
+    $v = new \Valitron\Validator(['name' => $urlName]);
+    
+    $v->rule('required', 'name')->message('URL не должен быть пустым');
+    $v->rule('url', 'name')->message('Некорректный URL');
+    $v->rule('lengthMax', 'name', 255)->message('URL превышает 255 символов');
 
-    if (empty($url) || strlen($url) > 255 || !filter_var($url, FILTER_VALIDATE_URL)) {
+    if (!$v->validate()) {
+        $errors = $v->errors();
+        $firstError = $errors['name'][0];
+
         return $renderer->render($response->withStatus(422), "home.phtml", [
-            'url' => ['name' => $url],
-            'errors' => ['name' => 'Некорректный URL']
+            'url' => ['name' => $urlName],
+            'errors' => ['name' => $firstError]
         ]);
     }
 
-    if (!isset($parsedUrl['scheme']) || !isset($parsedUrl['host'])) {
-        return $response->withHeader('Location', '/')->withStatus(302);
-    }
-
-    $normalizedUrl = "{$parsedUrl['scheme']}://{$parsedUrl['host']}";
+    $parsedUrl = parse_url($urlName);
+    $scheme = strtolower($parsedUrl['scheme']);
+    $host = strtolower($parsedUrl['host']);
+    $normalizedUrl = "{$scheme}://{$host}";
 
     $stmt = $pdo->prepare("SELECT id FROM urls WHERE name = ?");
     $stmt->execute([$normalizedUrl]);
@@ -112,14 +132,11 @@ $app->post('/urls', function ($request, $response) use ($flash, $renderer) {
     } else {
         $stmt = $pdo->prepare("INSERT INTO urls (name, created_at) VALUES (?, ?)");
         $stmt->execute([$normalizedUrl, date('Y-m-d H:i:s')]);
-
         $id = $pdo->lastInsertId();
         $flash->addMessage('success', 'Страница успешно добавлена');
     }
 
-    $routeContext = RouteContext::fromRequest($request);
-    $routeParser = $routeContext->getRouteParser();
-
+    $routeParser = \Slim\Routing\RouteContext::fromRequest($request)->getRouteParser();
     $url = $routeParser->urlFor('urls.show', ['id' => $id]);
 
     return $response
@@ -127,9 +144,8 @@ $app->post('/urls', function ($request, $response) use ($flash, $renderer) {
         ->withStatus(302);
 })->setName('urls.store');
 
-$app->get('/urls/{id}', function ($request, $response, array $args) use ($renderer) {
+$app->get('/urls/{id:[0-9]+}', function ($request, $response, array $args) use ($renderer) {
     $pdo = $this->get(\PDO::class);
-    
     $id = $args['id'];
 
     $stmt = $pdo->prepare("SELECT * FROM urls WHERE id = ?");
@@ -150,7 +166,7 @@ $app->get('/urls/{id}', function ($request, $response, array $args) use ($render
     ]);
 })->setName('urls.show');
 
-$app->post('/urls/{url_id}/checks', function ($request, $response, array $args) use ($flash) {
+$app->post('/urls/{url_id:[0-9]+}/checks', function ($request, $response, array $args) use ($flash) {
     $pdo = $this->get(\PDO::class);
     
     $urlId = $args['url_id'];
@@ -182,8 +198,8 @@ $app->post('/urls/{url_id}/checks', function ($request, $response, array $args) 
         $stmt->execute([
             $urlId,
             $res->getStatusCode(),
-            mb_strimwidth($h1, 0, 255),
-            mb_strimwidth($title, 0, 255),
+            $h1,
+            $title,
             $description,
             Carbon::now('Europe/Moscow')
         ]);
