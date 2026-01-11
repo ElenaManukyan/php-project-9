@@ -7,6 +7,8 @@ require __DIR__ . '/../vendor/autoload.php';
 use Slim\Factory\AppFactory;
 use Slim\Views\PhpRenderer;
 use Slim\Flash\Messages;
+use Slim\Exception\HttpNotFoundException;
+use Psr\Http\Message\ServerRequestInterface;
 use Dotenv\Dotenv;
 use Slim\Routing\RouteContext;
 use GuzzleHttp\Client;
@@ -49,6 +51,7 @@ $renderer = new PhpRenderer(__DIR__ . '/../templates');
 $renderer->setLayout('layout.phtml');
 $renderer->addAttribute('flash', $flash);
 
+$errorMiddleware = $app->addErrorMiddleware(true, true, true);
 
 $app->get('/', function ($request, $response) use ($renderer) {
     return $renderer->render($response, "home.phtml", [
@@ -195,6 +198,17 @@ $app->post('/urls/{url_id}/checks', function ($request, $response, array $args) 
     $url = $routeParser->urlFor('urls.show', ['id' => $urlId]);
 
     return $response->withHeader('Location', $url)->withStatus(302);
+});
+
+$errorMiddleware->setErrorHandler(HttpNotFoundException::class, function (
+    ServerRequestInterface $request,
+    Throwable $exception,
+    bool $displayErrorDetails,
+    bool $logErrors,
+    bool $logErrorDetails
+) use ($app, $renderer) {
+    $response = $app->getResponseFactory()->createResponse();
+    return $renderer->render($response->withStatus(404), 'errors/404.phtml');
 });
 
 $app->run();
