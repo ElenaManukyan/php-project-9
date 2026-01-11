@@ -12,12 +12,10 @@ use Slim\Routing\RouteContext;
 use GuzzleHttp\Client;
 use DiDom\Document;
 use Carbon\Carbon;
-use DI\Container; // Добавляем импорт
+use DI\Container;
 
-// 1. Создаем контейнер ПЕРЕД созданием приложения
 $container = new Container();
 
-// 2. Регистрируем PDO в контейнере
 $container->set(\PDO::class, function () {
     $dotenv = Dotenv::createImmutable(__DIR__ . '/..');
     $dotenv->safeLoad();
@@ -43,17 +41,14 @@ $container->set(\PDO::class, function () {
     return $pdo;
 });
 
-// 3. Передаем контейнер в AppFactory
 AppFactory::setContainer($container);
 $app = AppFactory::create();
 
-// Настройки рендерера и флеш-сообщений
 $flash = new Messages();
 $renderer = new PhpRenderer(__DIR__ . '/../templates');
 $renderer->setLayout('layout.phtml');
 $renderer->addAttribute('flash', $flash);
 
-// --- МАРШРУТЫ ---
 
 $app->get('/', function ($request, $response) use ($renderer) {
     return $renderer->render($response, "home.phtml", [
