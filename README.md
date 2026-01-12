@@ -51,11 +51,24 @@ The application requires **PostgreSQL**. Follow these steps to prepare your loca
    ```bash
    createdb page_analyzer
    ```
-2. Initialize the table structure using the provided SQL file:
+   or
+   1. Enter the standard PostgreSQL console
+   ```bash
+   psql postgres
+   ```
+   2. Execute the query inside the console:
+   ```bash
+   CREATE DATABASE page_analyzer;
+   ```
+   3. Exit the console
+   ```bash
+   \q
+   ```
+3. Initialize the table structure using the provided SQL file:
    ```bash
    psql -d page_analyzer -f database.sql
    ```
-3. Set up your environment variables: Create a ```.env``` file in the root directory and add your connection string:
+4. Set up your environment variables: Create a ```.env``` file in the root directory and add your connection string:
    ```bash
    DATABASE_URL=postgresql://<your_login>:<your_password>@localhost:<your_port>/<your_name_db>
    ```
