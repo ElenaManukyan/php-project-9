@@ -45,8 +45,20 @@ Use Composer via the provided Makefile:
 ```bash
 make install
 ```
-### 3. Database Configuration
-Create a database in PostgreSQL and execute the SQL scripts to build the table structure (you found it in ```database.sql```).
+### 3. Database Setup
+The application requires **PostgreSQL**. Follow these steps to prepare your local environment:
+1. **Create the database:**
+   ```bash
+   createdb page_analyzer
+   ```
+2. Initialize the table structure using the provided SQL file:
+   ```bash
+   psql -d page_analyzer -f database.sql
+   ```
+3. Set up your environment variables: Create a ```.env``` file in the root directory and add your connection string:
+   ```bash
+   DATABASE_URL=postgresql://<your_login>:<your_password>@localhost:<your_port>/<your_name_db>
+   ```
 ### 4. Launch the Application
 Start the built-in PHP server:
 ```bash
