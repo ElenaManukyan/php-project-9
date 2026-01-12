@@ -52,15 +52,15 @@ The application requires **PostgreSQL**. Follow these steps to prepare your loca
    createdb page_analyzer
    ```
    or
-   1. Enter the standard PostgreSQL console
+   1.1. Enter the standard PostgreSQL console
    ```bash
    psql postgres
    ```
-   2. Execute the query inside the console:
+   1.2. Execute the query inside the console:
    ```bash
    CREATE DATABASE page_analyzer;
    ```
-   3. Exit the console
+   1.3. Exit the console
    ```bash
    \q
    ```
