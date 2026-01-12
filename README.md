@@ -1,9 +1,7 @@
-### Hexlet tests and linter status:
-[![Actions Status](https://github.com/ElenaManukyan/php-project-9/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/ElenaManukyan/php-project-9/actions)
-
 # Page Analyzer
 
-[![Actions Status](https://github.com/your-username/php-project-9/workflows/php-check/badge.svg)](https://github.com/your-username/php-project-9/actions)
+[![Actions Status](https://github.com/ElenaManukyan/php-project-9/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/ElenaManukyan/php-project-9/actions)
+[![PHP-Linter](https://github.com/ElenaManukyan/php-project-9/actions/workflows/php.yml/badge.svg)](https://github.com/ElenaManukyan/php-project-9/actions/workflows/php.yml)
 
 **Page Analyzer** is a full-fledged web application built with PHP and the Slim framework that analyzes specified web pages for SEO suitability. The service checks page availability and extracts critical SEO tags.
 
