@@ -59,7 +59,7 @@ The application requires **PostgreSQL**. Follow these steps to prepare your loca
    ```
    1.2. Execute the query inside the console:
    ```bash
-   CREATE DATABASE page_analyzer;
+   CREATE DATABASE page_analyzer
    ```
    1.3. Exit the console
    ```bash
