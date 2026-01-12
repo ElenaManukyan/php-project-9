@@ -51,7 +51,8 @@ The application requires **PostgreSQL**. Follow these steps to prepare your loca
    ```bash
    createdb page_analyzer
    ```
-   or  
+   or
+   
    1.1. Enter the standard PostgreSQL console
    ```bash
    psql postgres
