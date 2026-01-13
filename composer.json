@@ -11,8 +11,13 @@
             "email": "utv.header@gmail.com"
         }
     ],
+    "config": {
+        "platform": {
+            "php": "8.2.0"
+        }
+    },
     "require": {
-        "php" : "8.2",
+        "php" : "^8.0",
         "slim/slim": "^4.15",
         "slim/psr7": "^1.8",
         "slim/php-view": "^3.4",
