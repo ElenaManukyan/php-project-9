@@ -5,6 +5,9 @@
 
 **Page Analyzer** is a full-fledged web application built with PHP and the Slim framework that analyzes specified web pages for SEO suitability. The service checks page availability and extracts critical SEO tags.
 
+## Demo:
+(Demo)[https://php-project-9-y79n.onrender.com]
+
 ## 📋 Project Description
 
 This application allows you to:
