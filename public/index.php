@@ -12,9 +12,9 @@ use Psr\Http\Message\ServerRequestInterface;
 use Dotenv\Dotenv;
 use Slim\Routing\RouteContext;
 use GuzzleHttp\Client;
-use DiDom\Document;
 use Carbon\Carbon;
 use DI\Container;
+use Symfony\Component\DomCrawler\Crawler;
 
 $container = new Container();
 
@@ -183,12 +183,13 @@ $app->post('/urls/{url_id:[0-9]+}/checks', function ($request, $response, array 
 
     try {
         $res = $client->get($url['name']);
-        $document = new Document($res->getBody()->getContents());
+        $html = $res->getBody()->getContents();
+        $crawler = new Crawler($html);
 
-        $h1 = $document->has('h1') ? $document->find('h1')[0]->text() : '';
-        $title = $document->has('title') ? $document->find('title')[0]->text() : null;
-        $descriptionElement = $document->find('meta[name=description]')[0] ?? null;
-        $description = $descriptionElement ? $descriptionElement->getAttribute('content') : null;
+        $h1 = optional($crawler->filter('h1')->first())->text();
+        $title = optional($crawler->filter('title')->first())->text();
+
+        $description = optional($crawler->filter('meta[name="description"]')->first())->attr('content');
 
         $stmt = $pdo->prepare("
             INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at)
