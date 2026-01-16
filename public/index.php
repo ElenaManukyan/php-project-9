@@ -109,7 +109,8 @@ $app->post('/urls', function ($request, $response) use ($flash, $renderer) {
 
     if (!$v->validate()) {
         $errors = $v->errors();
-        $firstError = $errors['name'][0];
+        $nameErrors = $errors['name'] ?? [];
+        $firstError = $nameErrors[0] ?? 'Некорректный ввод';
 
         return $renderer->render($response->withStatus(422), "home.phtml", [
             'url' => ['name' => $urlName],
@@ -189,7 +190,8 @@ $app->post('/urls/{url_id:[0-9]+}/checks', function ($request, $response, array 
         $h1 = optional($crawler->filter('h1')->first())->text();
         $title = optional($crawler->filter('title')->first())->text();
 
-        $description = optional($crawler->filter('meta[name="description"]')->first())->attr('content');
+        $node = $crawler->filter('meta[name="description"]');
+        $description = $node->count() > 0 ? $node->attr('content') : null;
 
         $stmt = $pdo->prepare("
             INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at)
