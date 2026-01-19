@@ -117,7 +117,7 @@ $app->post('/urls', function ($request, $response) use ($flash, $renderer) {
 
     $urlName = $formData['url']['name'];
     $parsedUrl = parse_url($urlName);
-    $normalizedUrl = strtolower($parsedUrl['scheme']) . "://" . strtolower($parsedUrl['host']);
+    $normalizedUrl = strtolower("{$parsedUrl['scheme']}://{$parsedUrl['host']}");
 
     $stmt = $pdo->prepare("SELECT id FROM urls WHERE name = ?");
     $stmt->execute([$normalizedUrl]);
