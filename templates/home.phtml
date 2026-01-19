@@ -17,13 +17,12 @@
                     <div class="w-100">
                         <input type="text" 
                             name="url[name]" 
-                            class="form-control form-control-lg <?= isset($errors['name']) ? 'is-invalid' : '' ?>" 
+                            class="form-control form-control-lg <?= isset($errors['url.name']) ? 'is-invalid' : '' ?>" 
                             placeholder="https://www.example.com"
                             value="<?= htmlspecialchars($url['name'] ?? '') ?>">
-                        
-                        <?php if (isset($errors['name'])): ?>
-                            <div class="invalid-feedback">
-                                <?= $errors['name'] ?>
+
+                        <?php if (isset($errors['url.name'])): ?>
+                            <div class="invalid-feedback d-block"> <?= htmlspecialchars($errors['url.name'][0]) ?>
                             </div>
                         <?php endif; ?>
                     </div>

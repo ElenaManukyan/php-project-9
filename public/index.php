@@ -87,44 +87,37 @@ $app->get('/urls', function ($request, $response) use ($renderer) {
         $checksById[$check['url_id']] = $check;
     }
 
-    $urlsWithChecks = array_map(function ($url) use ($checksById) {
+    foreach ($urls as &$url) {
         $lastCheck = $checksById[$url['id']] ?? null;
-        return array_merge($url, [
-            'last_check' => $lastCheck['created_at'] ?? null,
-            'status_code' => $lastCheck['status_code'] ?? null
-        ]);
-    }, $urls);
+        $url['last_check_at'] = $lastCheck['created_at'] ?? null;
+        $url['status_code'] = $lastCheck['status_code'] ?? null;
+    }
+    unset($url);
 
-    return $renderer->render($response, 'urls/index.phtml', ['urls' => $urlsWithChecks]);
+    return $renderer->render($response, 'urls/index.phtml', ['urls' => $urls]);
 })->setName('urls.index');
 
 $app->post('/urls', function ($request, $response) use ($flash, $renderer) {
     $pdo = $this->get(\PDO::class);
-    $data = $request->getParsedBody();
-    $urlData = $data['url'] ?? [];
-    $urlName = $urlData['name'] ?? '';
+    
+    $formData = (array) $request->getParsedBody();
+    
+    $validator = new Validator($formData);
 
-    $v = new Validator(['name' => $urlName]);
+    $validator->rule('required', 'url.name')->message('URL не должен быть пустым');
+    $validator->rule('url', 'url.name')->message('Некорректный URL');
+    $validator->rule('lengthMax', 'url.name', 255)->message('URL превышает 255 символов');
 
-    $v->rule('required', 'name')->message('URL не должен быть пустым');
-    $v->rule('url', 'name')->message('Некорректный URL');
-    $v->rule('lengthMax', 'name', 255)->message('URL превышает 255 символов');
-
-    if (!$v->validate()) {
-        $errors = $v->errors();
-        $nameErrors = $errors['name'] ?? [];
-        $firstError = $nameErrors[0] ?? 'Некорректный ввод';
-
+    if (!$validator->validate()) {
         return $renderer->render($response->withStatus(422), "home.phtml", [
-            'url' => ['name' => $urlName],
-            'errors' => ['name' => $firstError]
+            'url' => $formData['url'] ?? [], 
+            'errors' => $validator->errors()
         ]);
     }
 
+    $urlName = $formData['url']['name'];
     $parsedUrl = parse_url($urlName);
-    $scheme = strtolower($parsedUrl['scheme']);
-    $host = strtolower($parsedUrl['host']);
-    $normalizedUrl = "{$scheme}://{$host}";
+    $normalizedUrl = strtolower($parsedUrl['scheme']) . "://" . strtolower($parsedUrl['host']);
 
     $stmt = $pdo->prepare("SELECT id FROM urls WHERE name = ?");
     $stmt->execute([$normalizedUrl]);
@@ -141,10 +134,8 @@ $app->post('/urls', function ($request, $response) use ($flash, $renderer) {
     }
 
     $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-    $url = $routeParser->urlFor('urls.show', ['id' => $id]);
-
     return $response
-        ->withHeader('Location', $url)
+        ->withHeader('Location', $routeParser->urlFor('urls.show', ['id' => $id]))
         ->withStatus(302);
 })->setName('urls.store');
 
