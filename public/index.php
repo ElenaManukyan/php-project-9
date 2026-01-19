@@ -12,6 +12,8 @@ use Psr\Http\Message\ServerRequestInterface;
 use Dotenv\Dotenv;
 use Slim\Routing\RouteContext;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\RequestException;
 use Carbon\Carbon;
 use DI\Container;
 use Symfony\Component\DomCrawler\Crawler;
@@ -169,7 +171,6 @@ $app->get('/urls/{id:[0-9]+}', function ($request, $response, array $args) use (
 
 $app->post('/urls/{url_id:[0-9]+}/checks', function ($request, $response, array $args) use ($flash) {
     $pdo = $this->get(\PDO::class);
-
     $urlId = $args['url_id'];
 
     $stmt = $pdo->prepare("SELECT name FROM urls WHERE id = ?");
@@ -185,38 +186,48 @@ $app->post('/urls/{url_id:[0-9]+}/checks', function ($request, $response, array 
     try {
         $res = $client->get($url['name']);
         $html = $res->getBody()->getContents();
-        $crawler = new Crawler($html);
-
-        $h1 = optional($crawler->filter('h1')->first())->text();
-        $title = optional($crawler->filter('title')->first())->text();
-
-        $node = $crawler->filter('meta[name="description"]');
-        $description = $node->count() > 0 ? $node->attr('content') : null;
-
-        $stmt = $pdo->prepare("
-            INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ");
-
-        $stmt->execute([
-            $urlId,
-            $res->getStatusCode(),
-            $h1,
-            $title,
-            $description,
-            Carbon::now('Europe/Moscow')
-        ]);
-
-        $flash->addMessage('success', 'Страница успешно проверена');
+        $statusCode = $res->getStatusCode();
+    } catch (ConnectException | RequestException $e) {
+        $flash->addMessage('danger', "Проверка завершилась с ошибкой: Проблема с соединением или запросом");
+        
+        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+        return $response->withHeader('Location', $routeParser->urlFor('urls.show', ['id' => $urlId]))->withStatus(302);
     } catch (\Exception $e) {
         $flash->addMessage('danger', "Проверка завершилась с ошибкой: {$e->getMessage()}");
+
+        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+        return $response->withHeader('Location', $routeParser->urlFor('urls.show', ['id' => $urlId]))->withStatus(302);
     }
 
-    $routeContext = RouteContext::fromRequest($request);
-    $routeParser = $routeContext->getRouteParser();
-    $url = $routeParser->urlFor('urls.show', ['id' => $urlId]);
+    $crawler = new Crawler($html);
 
-    return $response->withHeader('Location', $url)->withStatus(302);
+    $h1Node = $crawler->filter('h1');
+    $h1 = $h1Node->count() > 0 ? $h1Node->first()->text() : null;
+
+    $titleNode = $crawler->filter('title');
+    $title = $titleNode->count() > 0 ? $titleNode->first()->text() : null;
+
+    $descriptionNode = $crawler->filter('meta[name="description"]');
+    $description = $descriptionNode->count() > 0 ? $descriptionNode->attr('content') : null;
+
+    $stmt = $pdo->prepare("
+        INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ");
+
+    $stmt->execute([
+        $urlId,
+        $statusCode,
+        $h1,
+        $title,
+        $description,
+        Carbon::now('Europe/Moscow')
+    ]);
+
+    $flash->addMessage('success', 'Страница успешно проверена');
+
+    $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+    return $response->withHeader('Location', $routeParser->urlFor('urls.show', ['id' => $urlId]))->withStatus(302);
 });
 
 $errorMiddleware->setErrorHandler(HttpNotFoundException::class, function (
