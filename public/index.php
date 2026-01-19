@@ -99,9 +99,9 @@ $app->get('/urls', function ($request, $response) use ($renderer) {
 
 $app->post('/urls', function ($request, $response) use ($flash, $renderer) {
     $pdo = $this->get(\PDO::class);
-    
+
     $formData = (array) $request->getParsedBody();
-    
+
     $validator = new Validator($formData);
 
     $validator->rule('required', 'url.name')->message('URL не должен быть пустым');
@@ -110,7 +110,7 @@ $app->post('/urls', function ($request, $response) use ($flash, $renderer) {
 
     if (!$validator->validate()) {
         return $renderer->render($response->withStatus(422), "home.phtml", [
-            'url' => $formData['url'] ?? [], 
+            'url' => $formData['url'] ?? [],
             'errors' => $validator->errors()
         ]);
     }
@@ -181,7 +181,7 @@ $app->post('/urls/{url_id:[0-9]+}/checks', function ($request, $response, array 
         $statusCode = $res->getStatusCode();
     } catch (ConnectException | RequestException $e) {
         $flash->addMessage('danger', "Проверка завершилась с ошибкой: Проблема с соединением или запросом");
-        
+
         $routeParser = RouteContext::fromRequest($request)->getRouteParser();
         return $response->withHeader('Location', $routeParser->urlFor('urls.show', ['id' => $urlId]))->withStatus(302);
     } catch (\Exception $e) {
