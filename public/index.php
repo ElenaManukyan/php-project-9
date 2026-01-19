@@ -203,6 +203,8 @@ $app->post('/urls/{url_id:[0-9]+}/checks', function ($request, $response, array 
 
     $h1Node = $crawler->filter('h1');
     $h1 = $h1Node->count() > 0 ? $h1Node->first()->text() : null;
+    // $h1Node = $crawler->first('h1');
+    // $h1 = $h1Node->count() > 0 ? $h1Node->text() : null;
 
     $titleNode = $crawler->filter('title');
     $title = $titleNode->count() > 0 ? $titleNode->first()->text() : null;
