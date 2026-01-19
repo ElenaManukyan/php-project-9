@@ -13,7 +13,7 @@
                 <h1 class="display-3">Анализатор страниц</h1>
                 <p class="lead">Бесплатно проверяйте сайты на SEO пригодность</p>
                 
-                <form action="/urls" method="post" class="rss-form d-flex justify-content-center align-items-start">
+                <form action="<?= $router->urlFor('urls.store') ?>" method="post" class="rss-form d-flex justify-content-center align-items-start">
                     <div class="w-100">
                         <input type="text" 
                             name="url[name]" 

@@ -17,6 +17,7 @@ use GuzzleHttp\Exception\RequestException;
 use Carbon\Carbon;
 use DI\Container;
 use Symfony\Component\DomCrawler\Crawler;
+use Valitron\Validator;
 
 $container = new Container();
 
@@ -103,7 +104,7 @@ $app->post('/urls', function ($request, $response) use ($flash, $renderer) {
     $urlData = $data['url'] ?? [];
     $urlName = $urlData['name'] ?? '';
 
-    $v = new \Valitron\Validator(['name' => $urlName]);
+    $v = new Validator(['name' => $urlName]);
 
     $v->rule('required', 'name')->message('URL не должен быть пустым');
     $v->rule('url', 'name')->message('Некорректный URL');
@@ -139,7 +140,7 @@ $app->post('/urls', function ($request, $response) use ($flash, $renderer) {
         $flash->addMessage('success', 'Страница успешно добавлена');
     }
 
-    $routeParser = \Slim\Routing\RouteContext::fromRequest($request)->getRouteParser();
+    $routeParser = RouteContext::fromRequest($request)->getRouteParser();
     $url = $routeParser->urlFor('urls.show', ['id' => $id]);
 
     return $response
@@ -230,7 +231,7 @@ $app->post('/urls/{url_id:[0-9]+}/checks', function ($request, $response, array 
 
     $routeParser = RouteContext::fromRequest($request)->getRouteParser();
     return $response->withHeader('Location', $routeParser->urlFor('urls.show', ['id' => $urlId]))->withStatus(302);
-});
+})->setName('urls.checks');
 
 $errorMiddleware->setErrorHandler(HttpNotFoundException::class, function (
     ServerRequestInterface $request,
