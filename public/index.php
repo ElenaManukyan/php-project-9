@@ -161,7 +161,7 @@ $app->get('/urls/{id:[0-9]+}', function ($request, $response, array $args) use (
     ]);
 })->setName('urls.show');
 
-$app->post('/urls/{url_id:[0-9]+}/checks', function ($request, $response, array $args) use ($flash) {
+$app->post('/urls/{url_id:[0-9]+}/checks', function ($request, $response, array $args) use ($flash, $renderer) {
     $pdo = $this->get(\PDO::class);
     $urlId = $args['url_id'];
 
