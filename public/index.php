@@ -148,7 +148,7 @@ $app->get('/urls/{id:[0-9]+}', function ($request, $response, array $args) use (
     $url = $stmt->fetch();
 
     if (!$url) {
-        return $response->withStatus(404)->write('Страница не найдена');
+        return $renderer->render($response->withStatus(404), 'errors/404.phtml');
     }
 
     $stmtChecks = $pdo->prepare("SELECT * FROM url_checks WHERE url_id = ? ORDER BY created_at DESC");
@@ -170,7 +170,7 @@ $app->post('/urls/{url_id:[0-9]+}/checks', function ($request, $response, array 
     $url = $stmt->fetch();
 
     if (!$url) {
-        return $response->withStatus(404);
+        return $renderer->render($response->withStatus(404), 'errors/404.phtml');
     }
 
     $client = new Client(['timeout' => 5.0, 'verify' => false]);
@@ -192,17 +192,9 @@ $app->post('/urls/{url_id:[0-9]+}/checks', function ($request, $response, array 
     }
 
     $crawler = new Crawler($html);
-
-    $h1Node = $crawler->filter('h1');
-    $h1 = $h1Node->count() > 0 ? $h1Node->first()->text() : null;
-    // $h1Node = $crawler->first('h1');
-    // $h1 = $h1Node->count() > 0 ? $h1Node->text() : null;
-
-    $titleNode = $crawler->filter('title');
-    $title = $titleNode->count() > 0 ? $titleNode->first()->text() : null;
-
-    $descriptionNode = $crawler->filter('meta[name="description"]');
-    $description = $descriptionNode->count() > 0 ? $descriptionNode->attr('content') : null;
+    $h1 = $crawler->filter('h1')->count() ? $crawler->filter('h1')->first()->text() : null;
+    $title = $crawler->filter('title')->count() ? $crawler->filter('title')->first()->text() : null;
+    $description = $crawler->filter('meta[name="description"]')->count() ? $crawler->filter('meta[name="description"]')->first()->attr('content') : null;
 
     $stmt = $pdo->prepare("
         INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at)
