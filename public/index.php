@@ -194,7 +194,9 @@ $app->post('/urls/{url_id:[0-9]+}/checks', function ($request, $response, array 
     $crawler = new Crawler($html);
     $h1 = $crawler->filter('h1')->count() ? $crawler->filter('h1')->first()->text() : null;
     $title = $crawler->filter('title')->count() ? $crawler->filter('title')->first()->text() : null;
-    $description = $crawler->filter('meta[name="description"]')->count() ? $crawler->filter('meta[name="description"]')->first()->attr('content') : null;
+    $description = $crawler->filter('meta[name="description"]')->count()
+        ? $crawler->filter('meta[name="description"]')->first()->attr('content')
+        : null;
 
     $stmt = $pdo->prepare("
         INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at)
